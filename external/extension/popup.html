@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+ This page is shown when the extension button is clicked, because the
+ "browser_action" field in manifest.json contains the "default_popup" key with
+ value "popup.html".
+ -->
+<html>
+  <head>
+    <title>Youtube linker</title>
+    <script src="jquery-1.11.3.min.js"></script>
+    <script src="popup.js"></script>
+  </head>
+  <body>
+    <div id="add">Add url</div>
+    <div id="copy">Copy urls</div>
+    <div id="url-list"></div>
+    <input type="text" id="urls" hidden />
+  </body>
+</html>
+
