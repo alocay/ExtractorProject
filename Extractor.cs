@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -9,29 +10,159 @@ using YoutubeExtractor;
 
 namespace AudioExtractor
 {
-    public class Extractor
+    public class Extractor : ViewModel
     {
-        public void Extract()
+        private readonly string BatchUrlFile = "batch-urls.txt";
+        private readonly string DefaultOutputPath =  Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+        private readonly string DefaultStatusMessage = "Add youtube URLs and hit Extract to start!";
+
+        private BackgroundWorker worker = new BackgroundWorker();
+        private string outputPath;
+        private string status;
+        private bool inProgress;
+        private Process extractProcess = null;
+
+        public bool InProgress
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.CreateNoWindow = true;
-            startInfo.UseShellExecute = false;
-            startInfo.FileName = Path.Combine(Environment.CurrentDirectory, "external\\youtube-dl.exe");
-            startInfo.Arguments = "-o " + Path.Combine("C:\\Temp", @"%(title)s.mp3") + 
-                " --extract-audio --audio-format \"mp3\" --batch-file " + @"F:\Code\C#\AudioExtractor\external\testurls.txt" + 
-                " -iw";
+            get 
+            { 
+                return inProgress; 
+            }
+            set 
+            { 
+                inProgress = value;
+                OnPropertyChanged("InProgress");
+            }
+        }
+
+        public string Status
+        {
+            get 
+            { 
+                return this.status; 
+            }
+            set 
+            { 
+                this.status = value;
+                OnPropertyChanged("Status");
+            }
+        }
+
+        public string OutputPath
+        {
+          get 
+          { 
+              return this.outputPath; 
+          }
+          set 
+          { 
+              this.outputPath = value;
+              OnPropertyChanged("OutputPath");
+          }
+        }
+
+        public Extractor() 
+        {
+            this.OutputPath = this.DefaultOutputPath;
+            this.Status = this.DefaultStatusMessage;
+            this.worker.WorkerSupportsCancellation = true;
+            this.worker.WorkerReportsProgress = false;
+            this.worker.DoWork += this.RunProcesAsync;
+            this.worker.RunWorkerCompleted += this.ProcessComplete;
+        }
+
+        public void Extract(string[] urls)
+        {
+            string[] cleanedUrls = this.CleanupUrls(urls);
+
+            if (!Directory.Exists(this.outputPath))
+            {
+                this.Status = "Output path not found!";
+                return;
+            }
+
+            if (cleanedUrls.Length == 0)
+            {
+                this.Status = "No URLs provided!";
+                return;
+            }
 
             try
             {
-                using (Process youtubedlExe = Process.Start(startInfo))
+                this.CreateBatchFile(cleanedUrls);
+
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.CreateNoWindow = true;
+                startInfo.UseShellExecute = false;
+                startInfo.FileName = Path.Combine(Environment.CurrentDirectory, "external\\youtube-dl.exe");
+                startInfo.Arguments = "-o " + Path.Combine(this.outputPath, @"%(title)s.mp3") +
+                    " --extract-audio --audio-format \"mp3\" --batch-file " + this.BatchUrlFile +
+                    " -iw";
+
+                this.Status = "Processing...";
+                this.InProgress = true;
+
+                worker.RunWorkerAsync(startInfo);
+
+            }
+            catch (IOException ex)
+            {
+                this.Status = "Error: " + ex.Message;
+            }
+        }
+
+        public void CancelAll()
+        {
+            this.worker.CancelAsync();
+
+            if (this.extractProcess != null)
+            {
+                this.extractProcess.Kill();
+            }
+        }
+
+        private void RunProcesAsync(object sender, DoWorkEventArgs e)
+        {
+            ProcessStartInfo startInfo = (ProcessStartInfo)e.Argument;
+            string message = string.Empty;
+
+            try
+            {
+                using (this.extractProcess = Process.Start(startInfo))
                 {
-                    youtubedlExe.WaitForExit();
+                    this.extractProcess.WaitForExit();
+                }
+
+                message = "Complete!";
+            }
+            catch (Exception ex)
+            {
+                message = "Error: " + ex.Message;
+            }
+
+            e.Result = message;
+        }
+
+        private void ProcessComplete(object sender, RunWorkerCompletedEventArgs e)
+        {
+            this.Status = (string)e.Result;
+            this.InProgress = false;
+        }
+
+        private void CreateBatchFile(string[] urls)
+        {
+            using (StreamWriter writer = new StreamWriter(this.BatchUrlFile, false))
+            {
+                foreach (string url in urls)
+                {
+                    writer.WriteLine(url.Trim());
                 }
             }
-            catch(Exception ex)
-            {
-                string e = ex.Message;
-            }
+        }
+
+        private string[] CleanupUrls(string[] urls)
+        {
+            return urls.Where(u => !string.IsNullOrEmpty(u)).ToArray();
         }
     }
 }
