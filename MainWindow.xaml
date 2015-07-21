@@ -10,6 +10,7 @@
 
     <Window.Resources>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <local:AudioFormatEnumToBooleanConverter x:Key="AudioFormatEnumToBooleanConverter" />
     </Window.Resources>
 
     <Grid>
@@ -73,8 +74,32 @@
             </StackPanel>
             <StackPanel
                 Grid.Row="1"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
+                Grid.Column="0">
+                <RadioButton 
+                    x:Name="AudioFormatM4a"
+                    GroupName="AudioFormat"
+                    Content="M4A"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    IsChecked="{Binding CurrentAudioFormat, Converter={StaticResource AudioFormatEnumToBooleanConverter}, ConverterParameter=m4a}"/>
+                <RadioButton 
+                    x:Name="AudioFormatMp3"
+                    GroupName="AudioFormat"
+                    Content="MP3"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    IsChecked="{Binding CurrentAudioFormat, Converter={StaticResource AudioFormatEnumToBooleanConverter}, ConverterParameter=mp3}"/>
+                <RadioButton 
+                    x:Name="AudioFormatAac"
+                    GroupName="AudioFormat"
+                    Content="AAC"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    IsChecked="{Binding CurrentAudioFormat, Converter={StaticResource AudioFormatEnumToBooleanConverter}, ConverterParameter=aac}"/>
+            </StackPanel>
+            <StackPanel
+                Grid.Row="1"
+                Grid.Column="1"
                 Orientation="Horizontal"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
@@ -92,6 +117,5 @@
                     HorizontalAlignment="Center" />
             </StackPanel>
         </Grid>
-
     </Grid>
 </Controls:MetroWindow>

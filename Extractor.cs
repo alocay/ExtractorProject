@@ -9,6 +9,13 @@ using System.Threading.Tasks;
 
 namespace AudioExtractor
 {
+    public enum AudioFormat
+    {
+        mp3,
+        aac,
+        m4a
+    }
+
     public class Extractor : ViewModel
     {
         private readonly string BatchUrlFile = "batch-urls.txt";
@@ -19,18 +26,32 @@ namespace AudioExtractor
         private string outputPath;
         private string status;
         private bool inProgress;
+        private AudioFormat currentAudioFormat = AudioFormat.m4a;
         private Process extractProcess = null;
         private Object processLock = new Object();
+
+        public AudioFormat CurrentAudioFormat
+        {
+            get
+            {
+                return this.currentAudioFormat;
+            }
+            set
+            {
+                this.currentAudioFormat = value;
+                OnPropertyChanged("CurrentAudioFormat");
+            }
+        }
 
         public bool InProgress
         {
             get 
             { 
-                return inProgress; 
+                return this.inProgress; 
             }
             set 
-            { 
-                inProgress = value;
+            {
+                this.inProgress = value;
                 OnPropertyChanged("InProgress");
             }
         }
@@ -95,10 +116,10 @@ namespace AudioExtractor
                 startInfo.CreateNoWindow = true;
                 startInfo.UseShellExecute = false;
                 startInfo.FileName = Path.Combine(Environment.CurrentDirectory, "external\\youtube-dl.exe");
-                startInfo.Arguments = "-o " + Path.Combine(this.outputPath, @"%(title)s.mp3") +
-                    " --extract-audio --audio-format \"mp3\" --batch-file " + this.BatchUrlFile +
+                startInfo.Arguments = "-o " + Path.Combine(this.outputPath, @"%(title)s." + this.currentAudioFormat.ToString()) +
+                    " --extract-audio --prefer-ffmpeg --audio-format \"" + this.currentAudioFormat.ToString() + "\" --batch-file " + this.BatchUrlFile +
                     " -iw";
-
+                
                 this.Status = "Processing...";
                 this.InProgress = true;
 
