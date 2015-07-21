@@ -25,7 +25,8 @@
             TextWrapping="Wrap" 
             VerticalAlignment="Stretch"
             VerticalScrollBarVisibility="auto"
-            AcceptsReturn="True"/>
+            AcceptsReturn="True"
+            IsEnabled="{Binding InProgress, Converter={StaticResource InverseBooleanConverter}}"/>
         
         <Grid
             Grid.Row="1"

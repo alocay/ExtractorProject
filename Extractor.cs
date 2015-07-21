@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using YoutubeExtractor;
 
 namespace AudioExtractor
 {
@@ -21,6 +20,7 @@ namespace AudioExtractor
         private string status;
         private bool inProgress;
         private Process extractProcess = null;
+        private Object processLock = new Object();
 
         public bool InProgress
         {
@@ -111,13 +111,26 @@ namespace AudioExtractor
             }
         }
 
+        private void OnProcessDisposed(object sender, EventArgs e)
+        {
+            lock (processLock)
+            {
+                this.extractProcess.Disposed -= this.OnProcessDisposed;
+                this.extractProcess = null;
+            }
+        }
+
         public void CancelAll()
         {
             this.worker.CancelAsync();
 
-            if (this.extractProcess != null)
+            lock (processLock)
             {
-                this.extractProcess.Kill();
+                if (this.extractProcess != null)
+                {
+                    this.extractProcess.Disposed -= this.OnProcessDisposed;
+                    this.extractProcess.Kill();
+                }
             }
         }
 
@@ -130,6 +143,7 @@ namespace AudioExtractor
             {
                 using (this.extractProcess = Process.Start(startInfo))
                 {
+                    this.extractProcess.Disposed += this.OnProcessDisposed;
                     this.extractProcess.WaitForExit();
                 }
 

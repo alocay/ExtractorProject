@@ -33,6 +33,7 @@ namespace AudioExtractor
                 {
                     dialog.IsFolderPicker = true;
                     dialog.Multiselect = false;
+                    dialog.DefaultDirectory = this.OutputPathBox.Text;
                     if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                     {
                         path = dialog.FileName;
@@ -43,6 +44,7 @@ namespace AudioExtractor
             {
                 using (FolderBrowserDialog dialog = new FolderBrowserDialog())
                 {
+                    dialog.RootFolder = Environment.SpecialFolder.MyMusic;
                     if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                     {
                         path = dialog.SelectedPath;
